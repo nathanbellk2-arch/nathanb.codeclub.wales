@@ -1,0 +1,1233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dragon Ball Battle - My Gaming World</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        header {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        header h1 {
+            font-size: 1.5em;
+            color: #feca57;
+        }
+
+        nav a {
+            color: #fff;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, #e94560, #0f3460);
+            transition: all 0.3s ease;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        nav a:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(233, 69, 96, 0.4);
+        }
+
+        .fullscreen-btn {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            z-index: 1001;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #e94560, #0f3460);
+            color: #fff;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .fullscreen-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 5px 20px rgba(233, 69, 96, 0.5);
+        }
+
+        body.fullscreen-mode {
+            background: #000;
+        }
+
+        body.fullscreen-mode header,
+        body.fullscreen-mode .instructions,
+        body.fullscreen-mode .controls:not(.fullscreen-controls),
+        body.fullscreen-mode .mode-selector {
+            display: none !important;
+        }
+
+        body.fullscreen-mode .game-info {
+            display: flex !important;
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1001;
+            background: rgba(0, 0, 0, 0.8);
+        }
+
+        body.fullscreen-mode .game-container {
+            max-width: 100%;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        body.fullscreen-mode #gameCanvas {
+            max-width: 100vw;
+            max-height: 100vh;
+            border-radius: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        body.fullscreen-mode .fullscreen-controls {
+            display: flex !important;
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1001;
+            gap: 15px;
+        }
+
+        .fullscreen-controls {
+            display: none;
+        }
+
+        .game-container {
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+
+        .mode-selector {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .mode-btn {
+            padding: 12px 25px;
+            border: 2px solid #feca57;
+            border-radius: 15px;
+            background: rgba(254, 202, 87, 0.1);
+            color: #feca57;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .mode-btn:hover, .mode-btn.active {
+            background: rgba(254, 202, 87, 0.3);
+            transform: scale(1.05);
+        }
+
+        .mode-btn.sparking {
+            border-color: #e74c3c;
+            color: #e74c3c;
+            background: rgba(231, 76, 60, 0.1);
+        }
+
+        .mode-btn.sparking:hover, .mode-btn.sparking.active {
+            background: rgba(231, 76, 60, 0.3);
+        }
+
+        .mode-btn.xenoverse {
+            border-color: #9b59b6;
+            color: #9b59b6;
+            background: rgba(155, 89, 182, 0.1);
+        }
+
+        .mode-btn.xenoverse:hover, .mode-btn.xenoverse.active {
+            background: rgba(155, 89, 182, 0.3);
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 15px 25px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .score-display {
+            font-size: 1.5em;
+            color: #feca57;
+        }
+
+        .score-display span {
+            font-size: 1.3em;
+            color: #fff;
+        }
+
+        .energy-display {
+            font-size: 1.2em;
+            color: #3498db;
+        }
+
+        .health-bar-container {
+            width: 200px;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .health-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #2ecc71, #27ae60);
+            border-radius: 10px;
+            transition: width 0.3s ease;
+            width: 100%;
+        }
+
+        #gameCanvas {
+            display: block;
+            margin: 0 auto;
+            background: linear-gradient(180deg, #0c2461 0%, #1e3799 50%, #f6e58d 100%);
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            cursor: crosshair;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #e94560, #ff6b6b);
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(233, 69, 96, 0.5);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #0f3460, #16213e);
+            color: #fff;
+        }
+
+        .btn-secondary:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(15, 52, 96, 0.5);
+        }
+
+        .instructions {
+            background: rgba(0, 0, 0, 0.6);
+            padding: 20px 25px;
+            border-radius: 15px;
+            margin-top: 20px;
+        }
+
+        .instructions h3 {
+            color: #feca57;
+            margin-bottom: 10px;
+        }
+
+        .instructions ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .instructions li {
+            padding: 5px 0;
+            color: #a0a0a0;
+        }
+
+        .instructions li::before {
+            content: "⚡ ";
+            margin-right: 8px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 400px;
+            box-shadow: 0 20px 60px rgba(233, 69, 96, 0.3);
+            border: 2px solid #e94560;
+        }
+
+        .modal-content h2 {
+            color: #feca57;
+            font-size: 2em;
+            margin-bottom: 20px;
+        }
+
+        .modal-content p {
+            color: #a0a0a0;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .modal-content .final-score {
+            font-size: 3em;
+            color: #e94560;
+            margin: 20px 0;
+        }
+
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            header h1 {
+                font-size: 1.2em;
+            }
+
+            .game-info {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            #gameCanvas {
+                max-width: 100%;
+                height: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="fullscreen-btn" id="fullscreenBtn" onclick="toggleFullscreen()" title="Toggle Fullscreen">⛶</button>
+
+    <header>
+        <h1>🐉 Dragon Ball Battle</h1>
+        <nav>
+            <a href="index.html">🏠 Home</a>
+            <a href="basketball-game.html">🏀 Basketball Game</a>
+        </nav>
+    </header>
+
+    <div class="game-container">
+        <div class="mode-selector">
+            <button class="mode-btn sparking active" onclick="setMode('sparking')">🔥 Sparking ZERO</button>
+            <button class="mode-btn xenoverse" onclick="setMode('xenoverse')">⚔️ Xenoverse Arena</button>
+        </div>
+
+        <div class="game-info">
+            <div class="score-display">Score: <span id="score">0</span></div>
+            <div class="energy-display">Energy: <span id="energy">100</span>⚡</div>
+            <div>
+                <span>Health: </span>
+                <div class="health-bar-container">
+                    <div class="health-bar" id="healthBar"></div>
+                </div>
+            </div>
+        </div>
+
+        <canvas id="gameCanvas" width="800" height="500"></canvas>
+
+        <div class="controls">
+            <button class="btn btn-primary" id="startBtn" onclick="startGame()">⚡ Start Battle</button>
+            <button class="btn btn-secondary" onclick="resetGame()">🔄 Reset</button>
+        </div>
+
+        <div class="fullscreen-controls controls">
+            <button class="btn btn-primary" onclick="startGame()">⚡ Start Battle</button>
+            <button class="btn btn-secondary" onclick="resetGame()">🔄 Reset</button>
+            <button class="btn btn-secondary" onclick="toggleFullscreen()">⛶ Exit Fullscreen</button>
+        </div>
+
+        <div class="instructions" id="instructions">
+            <h3>🔥 Sparking ZERO Mode:</h3>
+            <ul>
+                <li>Use WASD or Arrow keys to move your character</li>
+                <li>Click to fire Ki blasts at enemies</li>
+                <li>Move your mouse to aim your attacks</li>
+                <li>Collect energy orbs to power up</li>
+                <li>Defeat enemies before they reach you!</li>
+                <li>Chain combos for bonus points!</li>
+            </ul>
+            <h3 style="margin-top: 15px;">⚔️ Xenoverse Arena Mode:</h3>
+            <ul>
+                <li>Defend against waves of enemies</li>
+                <li>Use special moves when energy is full</li>
+                <li>Press E for powerful Kamehameha!</li>
+                <li>Survive as long as possible!</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="modal" id="gameOverModal">
+        <div class="modal-content">
+            <h2>Battle Over! 🐉</h2>
+            <p>Final Score:</p>
+            <div class="final-score" id="finalScore">0</div>
+            <p>Enemies Defeated: <span id="finalKills">0</span></p>
+            <p>Best Combo: <span id="finalCombo">0</span>x</p>
+            <br>
+            <button class="btn btn-primary" onclick="closeModal(); resetGame();">Fight Again</button>
+            <button class="btn btn-secondary" onclick="closeModal(); window.location.href='index.html'">Home</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Game state
+        let gameRunning = false;
+        let score = 0;
+        let energy = 100;
+        let maxEnergy = 100;
+        let health = 100;
+        let maxHealth = 100;
+        let kills = 0;
+        let combo = 0;
+        let bestCombo = 0;
+        let gameMode = 'sparking';
+        let wave = 1;
+        let enemiesSpawned = 0;
+        let maxEnemiesPerWave = 5;
+        let spawnTimer = 0;
+        let kamehamehaActive = false;
+        let kamehamehaTimer = 0;
+        let comboTimer = 0;
+
+        // Player
+        let player = {
+            x: 400,
+            y: 350,
+            width: 40,
+            height: 60,
+            speed: 5,
+            color: '#f39c12',
+            aura: 0
+        };
+
+        // Arrays
+        let projectiles = [];
+        let enemies = [];
+        let energyOrbs = [];
+        let particles = [];
+
+        // Mouse
+        let mouseX = 400;
+        let mouseY = 250;
+        let keys = {};
+
+        function setMode(mode) {
+            gameMode = mode;
+            document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        // Spawn enemy
+        function spawnEnemy() {
+            const side = Math.floor(Math.random() * 4);
+            let x, y, vx, vy;
+
+            if (gameMode === 'sparking') {
+                // Enemies come from top
+                x = Math.random() * canvas.width;
+                y = -30;
+                vx = (Math.random() - 0.5) * 2;
+                vy = 1 + Math.random() * 2;
+            } else {
+                // Xenoverse - enemies from all sides
+                switch(side) {
+                    case 0: x = Math.random() * canvas.width; y = -30; vx = (Math.random() - 0.5) * 2; vy = 1 + Math.random(); break;
+                    case 1: x = canvas.width + 30; y = Math.random() * canvas.height; vx = -(1 + Math.random()); vy = (Math.random() - 0.5) * 2; break;
+                    case 2: x = Math.random() * canvas.width; y = canvas.height + 30; vx = (Math.random() - 0.5) * 2; vy = -(1 + Math.random()); break;
+                    case 3: x = -30; y = Math.random() * canvas.height; vx = 1 + Math.random(); vy = (Math.random() - 0.5) * 2; break;
+                }
+            }
+
+            const types = ['soldier', 'elite', 'boss'];
+            const weights = [0.6, 0.3, 0.1];
+            let rand = Math.random();
+            let type = 'soldier';
+            let cumWeight = 0;
+            for (let i = 0; i < types.length; i++) {
+                cumWeight += weights[i];
+                if (rand < cumWeight) {
+                    type = types[i];
+                    break;
+                }
+            }
+
+            const typeStats = {
+                soldier: { hp: 1, speed: 1, size: 20, color: '#e74c3c', points: 100 },
+                elite: { hp: 3, speed: 1.5, size: 25, color: '#8e44ad', points: 300 },
+                boss: { hp: 10, speed: 0.8, size: 35, color: '#c0392b', points: 1000 }
+            };
+
+            const stats = typeStats[type];
+
+            enemies.push({
+                x, y, vx, vy,
+                hp: stats.hp,
+                maxHp: stats.hp,
+                speed: stats.speed * (1 + wave * 0.1),
+                size: stats.size,
+                color: stats.color,
+                points: stats.points,
+                type: type
+            });
+        }
+
+        // Spawn energy orb
+        function spawnEnergyOrb() {
+            energyOrbs.push({
+                x: Math.random() * (canvas.width - 60) + 30,
+                y: Math.random() * (canvas.height - 100) + 50,
+                radius: 10,
+                life: 300
+            });
+        }
+
+        // Draw player
+        function drawPlayer() {
+            ctx.save();
+            ctx.translate(player.x, player.y);
+
+            // Aura effect
+            player.aura = (player.aura + 0.1) % (Math.PI * 2);
+            const auraSize = 30 + Math.sin(player.aura) * 5;
+
+            if (energy >= maxEnergy) {
+                // Super aura when energy is full
+                ctx.fillStyle = 'rgba(255, 200, 0, 0.3)';
+                ctx.beginPath();
+                ctx.arc(0, 0, auraSize + 10, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = 'rgba(255, 255, 0, 0.2)';
+                ctx.beginPath();
+                ctx.arc(0, 0, auraSize + 5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Body
+            ctx.fillStyle = '#e67e22';
+            ctx.beginPath();
+            ctx.arc(0, -10, 15, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Gi (outfit)
+            ctx.fillStyle = '#d35400';
+            ctx.fillRect(-12, 5, 24, 30);
+
+            // Belt
+            ctx.fillStyle = '#2980b9';
+            ctx.fillRect(-14, 20, 28, 6);
+
+            // Hair
+            ctx.fillStyle = '#2c3e50';
+            ctx.beginPath();
+            ctx.moveTo(-10, -20);
+            ctx.lineTo(-15, -35);
+            ctx.lineTo(-5, -25);
+            ctx.lineTo(0, -40);
+            ctx.lineTo(5, -25);
+            ctx.lineTo(15, -35);
+            ctx.lineTo(10, -20);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        // Draw projectile (Ki blast)
+        function drawProjectile(proj) {
+            ctx.save();
+            ctx.translate(proj.x, proj.y);
+
+            // Glow
+            const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, proj.radius * 2);
+            gradient.addColorStop(0, 'rgba(100, 200, 255, 0.8)');
+            gradient.addColorStop(1, 'rgba(100, 200, 255, 0)');
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(0, 0, proj.radius * 2, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Core
+            ctx.fillStyle = '#3498db';
+            ctx.beginPath();
+            ctx.arc(0, 0, proj.radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(0, 0, proj.radius * 0.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        // Draw enemy
+        function drawEnemy(enemy) {
+            ctx.save();
+            ctx.translate(enemy.x, enemy.y);
+
+            // Shadow
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+            ctx.beginPath();
+            ctx.ellipse(0, enemy.size, enemy.size * 0.8, enemy.size * 0.3, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Body
+            ctx.fillStyle = enemy.color;
+            ctx.beginPath();
+            ctx.arc(0, 0, enemy.size, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Inner glow
+            ctx.fillStyle = 'rgba(255,255,255,0.3)';
+            ctx.beginPath();
+            ctx.arc(-enemy.size * 0.3, -enemy.size * 0.3, enemy.size * 0.4, 0, Math.PI * 2);
+            ctx.fill();
+
+            // HP bar
+            if (enemy.hp < enemy.maxHp) {
+                const barWidth = enemy.size * 2;
+                const barHeight = 4;
+                ctx.fillStyle = 'rgba(0,0,0,0.5)';
+                ctx.fillRect(-barWidth / 2, -enemy.size - 10, barWidth, barHeight);
+                ctx.fillStyle = enemy.hp > enemy.maxHp * 0.5 ? '#2ecc71' : enemy.hp > enemy.maxHp * 0.25 ? '#f39c12' : '#e74c3c';
+                ctx.fillRect(-barWidth / 2, -enemy.size - 10, barWidth * (enemy.hp / enemy.maxHp), barHeight);
+            }
+
+            // Type indicator
+            if (enemy.type === 'boss') {
+                ctx.fillStyle = '#feca57';
+                ctx.font = 'bold 12px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('BOSS', 0, enemy.size + 15);
+            } else if (enemy.type === 'elite') {
+                ctx.fillStyle = '#9b59b6';
+                ctx.font = 'bold 10px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('ELITE', 0, enemy.size + 12);
+            }
+
+            ctx.restore();
+        }
+
+        // Draw energy orb
+        function drawEnergyOrb(orb) {
+            ctx.save();
+            ctx.translate(orb.x, orb.y);
+
+            const pulse = Math.sin(Date.now() * 0.005) * 3;
+
+            // Glow
+            const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, orb.radius * 3 + pulse);
+            gradient.addColorStop(0, 'rgba(46, 204, 113, 0.6)');
+            gradient.addColorStop(1, 'rgba(46, 204, 113, 0)');
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(0, 0, orb.radius * 3 + pulse, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Core
+            ctx.fillStyle = '#2ecc71';
+            ctx.beginPath();
+            ctx.arc(0, 0, orb.radius + pulse, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(0, 0, orb.radius * 0.4, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        // Draw Kamehameha
+        function drawKamehameha() {
+            if (!kamehamehaActive) return;
+
+            const angle = Math.atan2(mouseY - player.y, mouseX - player.x);
+            const beamLength = 300;
+
+            ctx.save();
+            ctx.translate(player.x, player.y);
+            ctx.rotate(angle);
+
+            // Beam glow
+            const gradient = ctx.createLinearGradient(0, -30, beamLength, 30);
+            gradient.addColorStop(0, 'rgba(52, 152, 219, 0.8)');
+            gradient.addColorStop(0.5, 'rgba(52, 152, 219, 0.4)');
+            gradient.addColorStop(1, 'rgba(52, 152, 219, 0)');
+
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, -30, beamLength, 60);
+
+            // Beam core
+            const coreGradient = ctx.createLinearGradient(0, -15, beamLength, 15);
+            coreGradient.addColorStop(0, '#3498db');
+            coreGradient.addColorStop(0.5, '#5dade2');
+            coreGradient.addColorStop(1, 'rgba(52, 152, 219, 0)');
+
+            ctx.fillStyle = coreGradient;
+            ctx.fillRect(0, -15, beamLength, 30);
+
+            // White center
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(0, -5, beamLength * 0.7, 10);
+
+            ctx.restore();
+        }
+
+        // Draw particles
+        function drawParticles() {
+            particles.forEach((p, index) => {
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = p.life;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                ctx.fill();
+
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life -= 0.02;
+
+                if (p.life <= 0) {
+                    particles.splice(index, 1);
+                }
+            });
+            ctx.globalAlpha = 1;
+        }
+
+        // Create explosion effect
+        function createExplosion(x, y, color, count = 15) {
+            for (let i = 0; i < count; i++) {
+                const angle = (Math.PI * 2 / count) * i;
+                const speed = 2 + Math.random() * 4;
+                particles.push({
+                    x, y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    radius: 2 + Math.random() * 3,
+                    color: color,
+                    life: 1
+                });
+            }
+        }
+
+        // Update game
+        function update() {
+            // Spawn enemies
+            spawnTimer++;
+            if (spawnTimer >= Math.max(30, 90 - wave * 5)) {
+                if (gameMode === 'sparking' && enemiesSpawned < maxEnemiesPerWave * wave) {
+                    spawnEnemy();
+                    enemiesSpawned++;
+                    spawnTimer = 0;
+                } else if (gameMode === 'xenoverse') {
+                    spawnEnemy();
+                    spawnTimer = 0;
+                }
+            }
+
+            // Spawn energy orbs occasionally
+            if (Math.random() < 0.005 && energyOrbs.length < 3) {
+                spawnEnergyOrb();
+            }
+
+            // Update projectiles
+            projectiles.forEach((proj, pIndex) => {
+                proj.x += proj.vx;
+                proj.y += proj.vy;
+
+                // Remove if off screen
+                if (proj.x < -50 || proj.x > canvas.width + 50 || proj.y < -50 || proj.y > canvas.height + 50) {
+                    projectiles.splice(pIndex, 1);
+                    return;
+                }
+
+                // Check collision with enemies
+                enemies.forEach((enemy, eIndex) => {
+                    const dx = proj.x - enemy.x;
+                    const dy = proj.y - enemy.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist < proj.radius + enemy.size) {
+                        enemy.hp--;
+                        projectiles.splice(pIndex, 1);
+                        createExplosion(proj.x, proj.y, '#3498db', 5);
+
+                        if (enemy.hp <= 0) {
+                            createExplosion(enemy.x, enemy.y, enemy.color, 20);
+                            score += enemy.points * (1 + combo * 0.1);
+                            kills++;
+                            combo++;
+                            if (combo > bestCombo) bestCombo = combo;
+                            comboTimer = 120; // 2 seconds to continue combo
+                            energy = Math.min(energy + 10, maxEnergy);
+                            enemies.splice(eIndex, 1);
+                        }
+
+                        document.getElementById('score').textContent = Math.floor(score);
+                        document.getElementById('energy').textContent = Math.floor(energy);
+                    }
+                });
+            });
+
+            // Update enemies
+            enemies.forEach((enemy, index) => {
+                // Move towards player
+                const dx = player.x - enemy.x;
+                const dy = player.y - enemy.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist > 0) {
+                    enemy.x += (dx / dist) * enemy.speed;
+                    enemy.y += (dy / dist) * enemy.speed;
+                }
+
+                // Damage player on contact
+                const playerDx = player.x - enemy.x;
+                const playerDy = player.y - enemy.y;
+                const playerDist = Math.sqrt(playerDx * playerDx + playerDy * playerDy);
+
+                if (playerDist < enemy.size + 20) {
+                    health -= enemy.type === 'boss' ? 30 : enemy.type === 'elite' ? 15 : 10;
+                    createExplosion(player.x, player.y, '#e74c3c', 10);
+                    enemies.splice(index, 1);
+
+                    document.getElementById('healthBar').style.width = Math.max(0, health) + '%';
+
+                    if (health <= 0) {
+                        endGame();
+                    }
+                }
+            });
+
+            // Update energy orbs
+            energyOrbs.forEach((orb, index) => {
+                orb.life--;
+                if (orb.life <= 0) {
+                    energyOrbs.splice(index, 1);
+                    return;
+                }
+
+                // Check collision with player
+                const dx = player.x - orb.x;
+                const dy = player.y - orb.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist < 30 + orb.radius) {
+                    energy = Math.min(energy + 25, maxEnergy);
+                    createExplosion(orb.x, orb.y, '#2ecc71', 8);
+                    energyOrbs.splice(index, 1);
+                    document.getElementById('energy').textContent = Math.floor(energy);
+                }
+            });
+
+            // Update combo timer
+            if (comboTimer > 0) {
+                comboTimer--;
+                if (comboTimer <= 0) {
+                    combo = 0;
+                }
+            }
+
+            // Update Kamehameha
+            if (kamehamehaActive) {
+                kamehamehaTimer--;
+
+                // Damage enemies in beam path
+                const angle = Math.atan2(mouseY - player.y, mouseX - player.x);
+                enemies.forEach((enemy, index) => {
+                    const dx = enemy.x - player.x;
+                    const dy = enemy.y - player.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    const enemyAngle = Math.atan2(dy, dx);
+                    const angleDiff = Math.abs(angle - enemyAngle);
+
+                    if (dist < 300 && (angleDiff < 0.3 || angleDiff > Math.PI * 2 - 0.3)) {
+                        enemy.hp -= 5;
+                        if (enemy.hp <= 0) {
+                            createExplosion(enemy.x, enemy.y, enemy.color, 20);
+                            score += enemy.points * 2;
+                            kills++;
+                            enemies.splice(index, 1);
+                            document.getElementById('score').textContent = Math.floor(score);
+                        }
+                    }
+                });
+
+                if (kamehamehaTimer <= 0) {
+                    kamehamehaActive = false;
+                }
+            }
+
+            // Player movement
+            if (gameMode === 'xenoverse' || gameMode === 'sparking') {
+                if (keys['ArrowLeft'] || keys['a']) player.x -= player.speed;
+                if (keys['ArrowRight'] || keys['d']) player.x += player.speed;
+                if (keys['ArrowUp'] || keys['w']) player.y -= player.speed;
+                if (keys['ArrowDown'] || keys['s']) player.y += player.speed;
+
+                // Keep player in bounds
+                player.x = Math.max(20, Math.min(canvas.width - 20, player.x));
+                player.y = Math.max(20, Math.min(canvas.height - 20, player.y));
+            }
+
+            // Wave progression in sparking mode
+            if (gameMode === 'sparking' && enemiesSpawned >= maxEnemiesPerWave * wave && enemies.length === 0) {
+                wave++;
+                enemiesSpawned = 0;
+                maxEnemiesPerWave += 2;
+            }
+        }
+
+        // Draw game
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Background
+            if (gameMode === 'sparking') {
+                // Sky background
+                const skyGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+                skyGrad.addColorStop(0, '#0c2461');
+                skyGrad.addColorStop(0.5, '#1e3799');
+                skyGrad.addColorStop(1, '#f6e58d');
+                ctx.fillStyle = skyGrad;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // Clouds
+                ctx.fillStyle = 'rgba(255,255,255,0.3)';
+                for (let i = 0; i < 5; i++) {
+                    const cx = (Date.now() * 0.02 + i * 200) % (canvas.width + 200) - 100;
+                    const cy = 50 + i * 30;
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, 30, 0, Math.PI * 2);
+                    ctx.arc(cx + 25, cy - 10, 25, 0, Math.PI * 2);
+                    ctx.arc(cx + 50, cy, 30, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            } else {
+                // Arena background
+                ctx.fillStyle = '#1a1a2e';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // Arena floor
+                ctx.fillStyle = '#16213e';
+                ctx.beginPath();
+                ctx.arc(canvas.width / 2, canvas.height / 2, 200, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.strokeStyle = '#0f3460';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(canvas.width / 2, canvas.height / 2, 200, 0, Math.PI * 2);
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.arc(canvas.width / 2, canvas.height / 2, 150, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            // Draw energy orbs
+            energyOrbs.forEach(drawEnergyOrb);
+
+            // Draw Kamehameha
+            drawKamehameha();
+
+            // Draw projectiles
+            projectiles.forEach(drawProjectile);
+
+            // Draw enemies
+            enemies.forEach(drawEnemy);
+
+            // Draw player
+            drawPlayer();
+
+            // Draw particles
+            drawParticles();
+
+            // Draw combo display
+            if (combo > 1) {
+                ctx.fillStyle = '#feca57';
+                ctx.font = 'bold 24px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(`${combo}x COMBO!`, canvas.width / 2, 80);
+            }
+
+            // Draw wave info
+            if (gameMode === 'sparking') {
+                ctx.fillStyle = '#fff';
+                ctx.font = '16px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(`Wave ${wave} - Enemies: ${enemies.length}`, canvas.width / 2, 30);
+            }
+
+            // Draw energy full indicator
+            if (energy >= maxEnergy) {
+                ctx.fillStyle = '#feca57';
+                ctx.font = 'bold 18px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('Press E for KAMEHAMEHA!', canvas.width / 2, canvas.height - 20);
+            }
+        }
+
+        // Game loop
+        function gameLoop() {
+            if (!gameRunning) return;
+
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Start game
+        function startGame() {
+            if (gameRunning) return;
+
+            score = 0;
+            energy = 100;
+            health = 100;
+            kills = 0;
+            combo = 0;
+            bestCombo = 0;
+            wave = 1;
+            enemiesSpawned = 0;
+            maxEnemiesPerWave = 5;
+            spawnTimer = 0;
+            kamehamehaActive = false;
+            gameRunning = true;
+
+            projectiles = [];
+            enemies = [];
+            energyOrbs = [];
+            particles = [];
+
+            player.x = 400;
+            player.y = 350;
+
+            document.getElementById('score').textContent = '0';
+            document.getElementById('energy').textContent = '100';
+            document.getElementById('healthBar').style.width = '100%';
+            document.getElementById('startBtn').textContent = '🎮 Fighting...';
+            document.getElementById('startBtn').disabled = true;
+
+            gameLoop();
+        }
+
+        // End game
+        function endGame() {
+            gameRunning = false;
+
+            document.getElementById('finalScore').textContent = Math.floor(score);
+            document.getElementById('finalKills').textContent = kills;
+            document.getElementById('finalCombo').textContent = bestCombo;
+            document.getElementById('gameOverModal').classList.add('active');
+            document.getElementById('startBtn').textContent = '⚡ Start Battle';
+            document.getElementById('startBtn').disabled = false;
+        }
+
+        // Reset game
+        function resetGame() {
+            gameRunning = false;
+
+            score = 0;
+            energy = 100;
+            health = 100;
+            kills = 0;
+            combo = 0;
+            bestCombo = 0;
+            wave = 1;
+            enemiesSpawned = 0;
+            maxEnemiesPerWave = 5;
+            spawnTimer = 0;
+            kamehamehaActive = false;
+
+            projectiles = [];
+            enemies = [];
+            energyOrbs = [];
+            particles = [];
+
+            player.x = 400;
+            player.y = 350;
+
+            document.getElementById('score').textContent = '0';
+            document.getElementById('energy').textContent = '100';
+            document.getElementById('healthBar').style.width = '100%';
+            document.getElementById('startBtn').textContent = '⚡ Start Battle';
+            document.getElementById('startBtn').disabled = false;
+
+            // Draw idle state
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            draw();
+        }
+
+        // Close modal
+        function closeModal() {
+            document.getElementById('gameOverModal').classList.remove('active');
+        }
+
+        // Event listeners
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            mouseX = (e.clientX - rect.left) * (canvas.width / rect.width);
+            mouseY = (e.clientY - rect.top) * (canvas.height / rect.height);
+        });
+
+        canvas.addEventListener('click', (e) => {
+            if (!gameRunning || kamehamehaActive) return;
+
+            const rect = canvas.getBoundingClientRect();
+            const clickX = (e.clientX - rect.left) * (canvas.width / rect.width);
+            const clickY = (e.clientY - rect.top) * (canvas.height / rect.height);
+
+            const dx = clickX - player.x;
+            const dy = clickY - player.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            const speed = 8;
+
+            projectiles.push({
+                x: player.x,
+                y: player.y,
+                vx: (dx / dist) * speed,
+                vy: (dy / dist) * speed,
+                radius: 8
+            });
+
+            energy = Math.max(0, energy - 5);
+            document.getElementById('energy').textContent = Math.floor(energy);
+        });
+
+        document.addEventListener('keydown', (e) => {
+            keys[e.key] = true;
+
+            if (e.key === 'e' && gameRunning && energy >= maxEnergy && !kamehamehaActive) {
+                kamehamehaActive = true;
+                kamehamehaTimer = 60; // 1 second at 60fps
+                energy = 0;
+                document.getElementById('energy').textContent = '0';
+                e.preventDefault();
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            keys[e.key] = false;
+        });
+
+        // Touch support
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (!gameRunning) return;
+
+            const rect = canvas.getBoundingClientRect();
+            const touch = e.touches[0];
+            mouseX = (touch.clientX - rect.left) * (canvas.width / rect.width);
+            mouseY = (touch.clientY - rect.top) * (canvas.height / rect.height);
+
+            const dx = mouseX - player.x;
+            const dy = mouseY - player.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            const speed = 8;
+
+            projectiles.push({
+                x: player.x,
+                y: player.y,
+                vx: (dx / dist) * speed,
+                vy: (dy / dist) * speed,
+                radius: 8
+            });
+
+            energy = Math.max(0, energy - 5);
+            document.getElementById('energy').textContent = Math.floor(energy);
+        });
+
+        // Fullscreen toggle
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log(`Error attempting fullscreen: ${err.message}`);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        // Listen for fullscreen changes
+        document.addEventListener('fullscreenchange', () => {
+            if (document.fullscreenElement) {
+                document.body.classList.add('fullscreen-mode');
+                document.getElementById('fullscreenBtn').style.display = 'none';
+            } else {
+                document.body.classList.remove('fullscreen-mode');
+                document.getElementById('fullscreenBtn').style.display = 'block';
+            }
+        });
+
+        // Initialize
+        draw();
+    </script>
+</body>
+</html>

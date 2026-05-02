@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catch the Falling Food!</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 50%, #d4fc79 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .game-wrapper {
+            text-align: center;
+        }
+
+        h1 {
+            color: #fff;
+            font-size: 2.5em;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 15px;
+            color: #fff;
+            font-size: 1.3em;
+        }
+
+        .game-info span {
+            background: rgba(255,255,255,0.2);
+            padding: 8px 20px;
+            border-radius: 20px;
+        }
+
+        #gameCanvas {
+            display: block;
+            margin: 0 auto;
+            background: linear-gradient(180deg, #87CEEB 0%, #98D8C8 100%);
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3), 0 0 60px rgba(135, 206, 235, 0.4);
+            cursor: none;
+        }
+
+        .controls {
+            margin-top: 15px;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 0 10px;
+        }
+
+        .btn-start {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            color: #fff;
+        }
+
+        .btn-restart {
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+            color: #fff;
+        }
+
+        .btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #fff, #f0f0f0);
+            padding: 50px;
+            border-radius: 25px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            animation: popIn 0.3s ease;
+        }
+
+        @keyframes popIn {
+            from { transform: scale(0.5); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-content h2 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+
+        .modal-content p {
+            font-size: 1.3em;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .modal-content .final-score {
+            font-size: 3em;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+
+        .win-text {
+            color: #27ae60;
+        }
+
+        .lose-text {
+            color: #e74c3c;
+        }
+
+        .lives-display {
+            font-size: 1.5em;
+        }
+
+        .instructions {
+            color: rgba(255,255,255,0.8);
+            margin-top: 15px;
+            font-size: 0.95em;
+        }
+
+        .fullscreen-btn {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            z-index: 1001;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            color: #fff;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .fullscreen-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+        }
+
+        body.fullscreen-mode {
+            background: #000;
+        }
+
+        body.fullscreen-mode h1,
+        body.fullscreen-mode .instructions,
+        body.fullscreen-mode .controls:not(.fullscreen-controls) {
+            display: none !important;
+        }
+
+        body.fullscreen-mode .game-wrapper {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        body.fullscreen-mode .game-info {
+            display: flex !important;
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1001;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 20px;
+        }
+
+        body.fullscreen-mode #gameCanvas {
+            max-width: 100vw;
+            max-height: calc(100vh - 60px);
+            border-radius: 0;
+            width: 100%;
+            height: auto;
+        }
+
+        body.fullscreen-mode .fullscreen-controls {
+            display: flex !important;
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1001;
+            gap: 15px;
+        }
+
+        .fullscreen-controls {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <button class="fullscreen-btn" id="fullscreenBtn" onclick="toggleFullscreen()" title="Toggle Fullscreen">⛶</button>
+
+    <div class="game-wrapper">
+        <h1>🍕 Catch the Falling Food! 🍎</h1>
+        
+        <div class="game-info">
+            <span>🏆 Score: <strong id="score">0</strong> / 500</span>
+            <span>❤️ Lives: <strong id="lives" class="lives-display">❤️❤️❤️</strong></span>
+        </div>
+
+        <canvas id="gameCanvas" width="600" height="500"></canvas>
+
+        <div class="controls">
+            <button class="btn btn-start" id="startBtn" onclick="startGame()">🎮 Start Game</button>
+        </div>
+
+        <div class="fullscreen-controls">
+            <button class="btn btn-start" onclick="startGame()">🎮 Start Game</button>
+            <button class="btn btn-restart" onclick="toggleFullscreen()">⛶ Exit Fullscreen</button>
+        </div>
+
+        <p class="instructions">Use ← → Arrow Keys or A/D to move. Catch the food before it hits the ground!</p>
+    </div>
+
+    <div class="modal" id="gameModal">
+        <div class="modal-content">
+            <h2 id="modalTitle"></h2>
+            <p id="modalMessage"></p>
+            <div class="final-score" id="modalScore"></div>
+            <br>
+            <button class="btn btn-restart" onclick="closeModal(); resetGame();">🔄 Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Game state
+        let gameRunning = false;
+        let score = 0;
+        let lives = 3;
+        let basketX = 275;
+        const basketWidth = 80;
+        const basketHeight = 40;
+        const basketY = 450;
+        const basketSpeed = 7;
+        const winScore = 500;
+
+        // Food items
+        const foodTypes = [
+            { emoji: '🍕', points: 5 },
+            { emoji: '🍔', points: 5 },
+            { emoji: '🌮', points: 5 },
+            { emoji: '🍦', points: 5 },
+            { emoji: '🍎', points: 3 },
+            { emoji: '🍊', points: 3 },
+            { emoji: '🍇', points: 3 },
+            { emoji: '🥕', points: 3 },
+            { emoji: '🍩', points: 10 },
+            { emoji: '🧁', points: 10 },
+            { emoji: '🍪', points: 8 },
+            { emoji: '🥑', points: 2 }
+        ];
+
+        let fallingFoods = [];
+        let spawnTimer = 0;
+        let spawnInterval = 60; // frames between spawns
+        let fallSpeed = 1.5;
+        const baseFallSpeed = 1.5;
+
+        // Keys
+        let keys = {};
+
+        // Particle effects
+        let particles = [];
+
+        function spawnFood() {
+            const type = foodTypes[Math.floor(Math.random() * foodTypes.length)];
+            fallingFoods.push({
+                x: Math.random() * (canvas.width - 40) + 20,
+                y: -30,
+                emoji: type.emoji,
+                points: type.points,
+                speed: fallSpeed + Math.random() * 1.5,
+                size: 25,
+                rotation: Math.random() * Math.PI * 2,
+                rotSpeed: (Math.random() - 0.5) * 0.1
+            });
+        }
+
+        function createParticles(x, y, color) {
+            for (let i = 0; i < 12; i++) {
+                const angle = (Math.PI * 2 / 12) * i;
+                particles.push({
+                    x, y,
+                    vx: Math.cos(angle) * (2 + Math.random() * 3),
+                    vy: Math.sin(angle) * (2 + Math.random() * 3),
+                    radius: 3 + Math.random() * 4,
+                    color: color,
+                    life: 1
+                });
+            }
+        }
+
+        function createHeartParticles(x, y) {
+            for (let i = 0; i < 8; i++) {
+                const angle = (Math.PI * 2 / 8) * i;
+                particles.push({
+                    x, y,
+                    vx: Math.cos(angle) * (1 + Math.random() * 2),
+                    vy: Math.sin(angle) * (1 + Math.random() * 2) - 2,
+                    radius: 5 + Math.random() * 3,
+                    color: '#e74c3c',
+                    life: 1,
+                    isHeart: true
+                });
+            }
+        }
+
+        function drawBasket() {
+            ctx.save();
+            ctx.translate(basketX + basketWidth / 2, basketY + basketHeight / 2);
+
+            // Basket body
+            ctx.fillStyle = '#8B4513';
+            ctx.beginPath();
+            ctx.moveTo(-basketWidth / 2, -basketHeight / 2);
+            ctx.lineTo(basketWidth / 2, -basketHeight / 2);
+            ctx.lineTo(basketWidth / 2 - 10, basketHeight / 2);
+            ctx.lineTo(-basketWidth / 2 + 10, basketHeight / 2);
+            ctx.closePath();
+            ctx.fill();
+
+            // Basket rim
+            ctx.fillStyle = '#A0522D';
+            ctx.fillRect(-basketWidth / 2 - 5, -basketHeight / 2, basketWidth + 10, 8);
+
+            // Basket weave lines
+            ctx.strokeStyle = '#654321';
+            ctx.lineWidth = 1;
+            for (let i = 0; i < 4; i++) {
+                const y = -basketHeight / 2 + 10 + i * 8;
+                ctx.beginPath();
+                ctx.moveTo(-basketWidth / 2 + 5, y);
+                ctx.lineTo(basketWidth / 2 - 5, y);
+                ctx.stroke();
+            }
+
+            ctx.restore();
+        }
+
+        function drawFood(food) {
+            ctx.save();
+            ctx.translate(food.x, food.y);
+            ctx.rotate(food.rotation);
+            ctx.font = `${food.size}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(food.emoji, 0, 0);
+            ctx.restore();
+        }
+
+        function drawParticles() {
+            particles.forEach((p, index) => {
+                ctx.globalAlpha = p.life;
+                
+                if (p.isHeart) {
+                    ctx.font = `${p.radius * 3}px Arial`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('💔', p.x, p.y);
+                } else {
+                    ctx.fillStyle = p.color;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.1; // gravity
+                p.life -= 0.025;
+
+                if (p.life <= 0) {
+                    particles.splice(index, 1);
+                }
+            });
+            ctx.globalAlpha = 1;
+        }
+
+        function drawBackground() {
+            // Sky gradient - warm pleasant tones
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, '#87CEEB');
+            gradient.addColorStop(0.3, '#B0E0F0');
+            gradient.addColorStop(0.6, '#98D8C8');
+            gradient.addColorStop(0.85, '#7BC67E');
+            gradient.addColorStop(1, '#5DAE62');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Animated clouds
+            ctx.fillStyle = 'rgba(255,255,255,0.7)';
+            const time = Date.now() * 0.0002;
+            for (let i = 0; i < 5; i++) {
+                const cx = ((time * 30 + i * 180) % (canvas.width + 200)) - 100;
+                const cy = 30 + i * 28;
+                const scale = 0.8 + Math.sin(time + i) * 0.15;
+                ctx.save();
+                ctx.translate(cx, cy);
+                ctx.scale(scale, scale);
+                ctx.beginPath();
+                ctx.arc(0, 0, 22, 0, Math.PI * 2);
+                ctx.arc(18, -8, 18, 0, Math.PI * 2);
+                ctx.arc(36, 0, 22, 0, Math.PI * 2);
+                ctx.arc(18, 8, 15, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+
+            // Sun
+            const sunX = canvas.width - 80;
+            const sunY = 70;
+            const sunPulse = 1 + Math.sin(Date.now() * 0.003) * 0.05;
+            ctx.save();
+            ctx.translate(sunX, sunY);
+            ctx.scale(sunPulse, sunPulse);
+            
+            // Sun rays
+            ctx.strokeStyle = 'rgba(255, 223, 0, 0.3)';
+            ctx.lineWidth = 2;
+            for (let i = 0; i < 12; i++) {
+                const angle = (Math.PI * 2 / 12) * i + Date.now() * 0.001;
+                ctx.beginPath();
+                ctx.moveTo(Math.cos(angle) * 25, Math.sin(angle) * 25);
+                ctx.lineTo(Math.cos(angle) * 40, Math.sin(angle) * 40);
+                ctx.stroke();
+            }
+            
+            // Sun body
+            const sunGradient = ctx.createRadialGradient(0, 0, 5, 0, 0, 25);
+            sunGradient.addColorStop(0, '#FFE77D');
+            sunGradient.addColorStop(0.5, '#FFD700');
+            sunGradient.addColorStop(1, 'rgba(255, 215, 0, 0.8)');
+            ctx.fillStyle = sunGradient;
+            ctx.beginPath();
+            ctx.arc(0, 0, 25, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+
+            // Rolling hills in background
+            ctx.fillStyle = '#6BCB77';
+            ctx.beginPath();
+            ctx.moveTo(0, canvas.height - 80);
+            for (let x = 0; x <= canvas.width; x += 50) {
+                const hillY = canvas.height - 80 + Math.sin(x * 0.015 + 1) * 20 + Math.sin(x * 0.008) * 15;
+                ctx.lineTo(x, hillY);
+            }
+            ctx.lineTo(canvas.width, canvas.height);
+            ctx.lineTo(0, canvas.height);
+            ctx.closePath();
+            ctx.fill();
+
+            // Second hill layer
+            ctx.fillStyle = '#5DBB63';
+            ctx.beginPath();
+            ctx.moveTo(0, canvas.height - 50);
+            for (let x = 0; x <= canvas.width; x += 40) {
+                const hillY = canvas.height - 50 + Math.sin(x * 0.02 + 3) * 15 + Math.sin(x * 0.012 + 1) * 10;
+                ctx.lineTo(x, hillY);
+            }
+            ctx.lineTo(canvas.width, canvas.height);
+            ctx.lineTo(0, canvas.height);
+            ctx.closePath();
+            ctx.fill();
+
+            // Ground with grass texture
+            ctx.fillStyle = '#4CAF50';
+            ctx.fillRect(0, canvas.height - 25, canvas.width, 25);
+            
+            // Grass blades
+            const grassTime = Date.now() * 0.002;
+            ctx.fillStyle = '#66BB6A';
+            for (let x = 0; x < canvas.width; x += 8) {
+                const grassHeight = 5 + Math.sin(x * 0.5 + grassTime) * 3;
+                ctx.beginPath();
+                ctx.moveTo(x, canvas.height - 25);
+                ctx.quadraticCurveTo(x + 2, canvas.height - 25 - grassHeight, x + 4, canvas.height - 25);
+                ctx.fill();
+            }
+
+            // Small flowers
+            const flowerColors = ['#FF6B6B', '#FFE66D', '#FF8ED4', '#A8E6CF'];
+            for (let i = 0; i < 12; i++) {
+                const fx = (i * 53 + 20) % canvas.width;
+                const fy = canvas.height - 28 + Math.sin(i * 1.5) * 5;
+                const flowerColor = flowerColors[i % flowerColors.length];
+                const flowerSize = 3 + Math.sin(i * 2.3) * 1;
+                const sway = Math.sin(grassTime + i) * 2;
+                
+                // Stem
+                ctx.strokeStyle = '#388E3C';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(fx, fy + 5);
+                ctx.quadraticCurveTo(fx + sway, fy, fx + sway * 0.5, fy - flowerSize);
+                ctx.stroke();
+                
+                // Petals
+                ctx.fillStyle = flowerColor;
+                for (let p = 0; p < 5; p++) {
+                    const angle = (Math.PI * 2 / 5) * p;
+                    const px = fx + sway * 0.5 + Math.cos(angle) * flowerSize;
+                    const py = fy - flowerSize + Math.sin(angle) * flowerSize;
+                    ctx.beginPath();
+                    ctx.arc(px, py, flowerSize * 0.6, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                // Center
+                ctx.fillStyle = '#FFE66D';
+                ctx.beginPath();
+                ctx.arc(fx + sway * 0.5, fy - flowerSize, flowerSize * 0.3, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Ground line
+            ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(0, canvas.height - 25);
+            ctx.lineTo(canvas.width, canvas.height - 25);
+            ctx.stroke();
+
+            // Butterflies
+            const butterflyTime = Date.now() * 0.0015;
+            for (let b = 0; b < 3; b++) {
+                const bx = ((butterflyTime * 40 + b * 200) % (canvas.width + 60)) - 30;
+                const by = canvas.height - 100 + Math.sin(butterflyTime + b * 2) * 30;
+                const wingAngle = Math.sin(butterflyTime * 3 + b) * 0.4;
+                
+                ctx.save();
+                ctx.translate(bx, by);
+                
+                // Wings
+                ctx.fillStyle = b === 0 ? '#FF8ED4' : b === 1 ? '#FFE66D' : '#A8E6CF';
+                ctx.beginPath();
+                ctx.ellipse(-5, 0, 6, 4, wingAngle, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.ellipse(5, 0, 6, 4, -wingAngle, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Body
+                ctx.fillStyle = '#333';
+                ctx.beginPath();
+                ctx.ellipse(0, 0, 1.5, 4, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.restore();
+            }
+        }
+
+        function update() {
+            // Spawn food
+            spawnTimer++;
+            if (spawnTimer >= spawnInterval) {
+                spawnFood();
+                spawnTimer = 0;
+            }
+
+            // Increase difficulty based on score
+            const scoreMilestone = Math.floor(score / 50);
+            const targetFallSpeed = baseFallSpeed + scoreMilestone * 0.3;
+            if (fallSpeed < targetFallSpeed) {
+                fallSpeed += 0.005; // Gradual speed increase
+            }
+            
+            // Also increase spawn frequency based on score
+            const targetSpawnInterval = Math.max(25, 60 - scoreMilestone * 4);
+            if (spawnInterval > targetSpawnInterval) {
+                spawnInterval -= 0.05;
+            }
+
+            // Move basket
+            if (keys['ArrowLeft'] || keys['a'] || keys['A']) {
+                basketX -= basketSpeed;
+            }
+            if (keys['ArrowRight'] || keys['d'] || keys['D']) {
+                basketX += basketSpeed;
+            }
+
+            // Keep basket in bounds
+            basketX = Math.max(0, Math.min(canvas.width - basketWidth, basketX));
+
+            // Update falling foods
+            fallingFoods.forEach((food, index) => {
+                food.y += food.speed;
+                food.rotation += food.rotSpeed;
+
+                // Check if caught by basket
+                if (food.y + food.size / 2 >= basketY &&
+                    food.y - food.size / 2 <= basketY + basketHeight &&
+                    food.x >= basketX &&
+                    food.x <= basketX + basketWidth) {
+                    
+                    score += food.points;
+                    document.getElementById('score').textContent = score;
+                    createParticles(food.x, food.y, '#FFD700');
+                    fallingFoods.splice(index, 1);
+
+                    // Check win condition
+                    if (score >= winScore) {
+                        endGame(true);
+                    }
+                    return;
+                }
+
+                // Check if hit the ground (missed)
+                if (food.y > canvas.height + 20) {
+                    lives--;
+                    updateLivesDisplay();
+                    createHeartParticles(food.x, canvas.height - 30);
+                    fallingFoods.splice(index, 1);
+                    
+                    // Reset speed when losing a life
+                    fallSpeed = baseFallSpeed;
+                    spawnInterval = 60;
+
+                    // Check lose condition
+                    if (lives <= 0) {
+                        endGame(false);
+                    }
+                }
+            });
+        }
+
+        function draw() {
+            drawBackground();
+            
+            // Draw falling foods
+            fallingFoods.forEach(drawFood);
+            
+            // Draw basket
+            drawBasket();
+            
+            // Draw particles
+            drawParticles();
+
+            // Draw score progress bar
+            const progress = Math.min(score / winScore, 1);
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+            ctx.fillRect(10, 10, 200, 15);
+            
+            const progressGradient = ctx.createLinearGradient(10, 0, 210, 0);
+            progressGradient.addColorStop(0, '#f39c12');
+            progressGradient.addColorStop(1, '#27ae60');
+            ctx.fillStyle = progressGradient;
+            ctx.fillRect(10, 10, 200 * progress, 15);
+            
+            ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(10, 10, 200, 15);
+            
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 10px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(`${score}/${winScore}`, 110, 22);
+        }
+
+        function updateLivesDisplay() {
+            const livesContainer = document.getElementById('lives');
+            let hearts = '';
+            for (let i = 0; i < lives; i++) {
+                hearts += '❤️';
+            }
+            for (let i = lives; i < 3; i++) {
+                hearts += '🖤';
+            }
+            livesContainer.textContent = hearts;
+        }
+
+        function gameLoop() {
+            if (!gameRunning) return;
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        function startGame() {
+            if (gameRunning) return;
+            gameRunning = true;
+            document.getElementById('startBtn').textContent = '🎮 Playing...';
+            document.getElementById('startBtn').disabled = true;
+            gameLoop();
+        }
+
+        function endGame(won) {
+            gameRunning = false;
+            
+            const modal = document.getElementById('gameModal');
+            const title = document.getElementById('modalTitle');
+            const message = document.getElementById('modalMessage');
+            const scoreDisplay = document.getElementById('modalScore');
+
+            if (won) {
+                title.textContent = '🎉 You Win! 🎉';
+                title.className = 'win-text';
+                message.textContent = 'Congratulations! You caught enough food!';
+                scoreDisplay.textContent = `Score: ${score}`;
+                scoreDisplay.className = 'final-score win-text';
+            } else {
+                title.textContent = '💔 Game Over 💔';
+                title.className = 'lose-text';
+                message.textContent = 'You ran out of lives!';
+                scoreDisplay.textContent = `Final Score: ${score}`;
+                scoreDisplay.className = 'final-score lose-text';
+            }
+
+            modal.classList.add('active');
+        }
+
+        function resetGame() {
+            score = 0;
+            lives = 3;
+            fallingFoods = [];
+            particles = [];
+            spawnTimer = 0;
+            spawnInterval = 60;
+            fallSpeed = baseFallSpeed;
+            basketX = 275;
+
+            document.getElementById('score').textContent = '0';
+            updateLivesDisplay();
+            document.getElementById('startBtn').textContent = '🎮 Start Game';
+            document.getElementById('startBtn').disabled = false;
+
+            // Draw initial state
+            drawBackground();
+            drawBasket();
+        }
+
+        function closeModal() {
+            document.getElementById('gameModal').classList.remove('active');
+        }
+
+        // Event listeners
+        document.addEventListener('keydown', (e) => {
+            keys[e.key] = true;
+            if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+                e.preventDefault();
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            keys[e.key] = false;
+        });
+
+        // Touch controls
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const rect = canvas.getBoundingClientRect();
+            const touch = e.touches[0];
+            const touchX = (touch.clientX - rect.left) * (canvas.width / rect.width);
+            
+            if (touchX < basketX + basketWidth / 2) {
+                keys['ArrowLeft'] = true;
+                keys['ArrowRight'] = false;
+            } else {
+                keys['ArrowRight'] = true;
+                keys['ArrowLeft'] = false;
+            }
+        });
+
+        canvas.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            keys['ArrowLeft'] = false;
+            keys['ArrowRight'] = false;
+        });
+
+        // Fullscreen toggle
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log(`Error attempting fullscreen: ${err.message}`);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        // Listen for fullscreen changes
+        document.addEventListener('fullscreenchange', () => {
+            if (document.fullscreenElement) {
+                document.body.classList.add('fullscreen-mode');
+                document.getElementById('fullscreenBtn').style.display = 'none';
+            } else {
+                document.body.classList.remove('fullscreen-mode');
+                document.getElementById('fullscreenBtn').style.display = 'block';
+            }
+        });
+
+        // Initialize
+        drawBackground();
+        drawBasket();
+    </script>
+</body>
+</html>

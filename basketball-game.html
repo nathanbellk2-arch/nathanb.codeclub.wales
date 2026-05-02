@@ -1,0 +1,1270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2 Player Basketball - My Gaming World</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #fff;
+            overflow: hidden;
+        }
+
+        header {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            position: relative;
+            z-index: 10;
+        }
+
+        header h1 {
+            font-size: 1.8em;
+            color: #feca57;
+        }
+
+        nav a {
+            color: #fff;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            background: linear-gradient(135deg, #e94560, #0f3460);
+            transition: all 0.3s ease;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        nav a:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(233, 69, 96, 0.4);
+        }
+
+        .fullscreen-btn {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            z-index: 1001;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #e94560, #0f3460);
+            color: #fff;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .fullscreen-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 5px 20px rgba(233, 69, 96, 0.5);
+        }
+
+        body.fullscreen-mode {
+            background: #000;
+        }
+
+        body.fullscreen-mode header,
+        body.fullscreen-mode .instructions,
+        body.fullscreen-mode .controls:not(.fullscreen-controls) {
+            display: none !important;
+        }
+
+        body.fullscreen-mode .scoreboard {
+            display: flex !important;
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1001;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px 30px;
+            border-radius: 15px;
+            gap: 40px;
+        }
+
+        body.fullscreen-mode .game-container {
+            max-width: 100%;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        body.fullscreen-mode #gameCanvas {
+            max-width: 100vw;
+            max-height: 100vh;
+            border-radius: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        body.fullscreen-mode .fullscreen-controls {
+            display: flex !important;
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1001;
+            gap: 15px;
+        }
+
+        .fullscreen-controls {
+            display: none;
+        }
+
+        .game-container {
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 0 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .scoreboard {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 15px 40px;
+            border-radius: 15px;
+            margin-bottom: 15px;
+            gap: 40px;
+            width: 100%;
+            max-width: 700px;
+        }
+
+        .team-score {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .team-score.player1 {
+            color: #3498db;
+        }
+
+        .team-score.player2 {
+            color: #e74c3c;
+        }
+
+        .team-score .score {
+            font-size: 2em;
+            font-weight: bold;
+            min-width: 50px;
+            text-align: center;
+        }
+
+        .team-score .label {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        .game-timer {
+            font-size: 1.8em;
+            color: #feca57;
+            font-weight: bold;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .possession-indicator {
+            font-size: 0.8em;
+            padding: 3px 8px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.2);
+        }
+
+        #gameCanvas {
+            display: block;
+            margin: 0 auto;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            cursor: default;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #e94560, #ff6b6b);
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(233, 69, 96, 0.5);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #0f3460, #16213e);
+            color: #fff;
+        }
+
+        .btn-secondary:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(15, 52, 96, 0.5);
+        }
+
+        .instructions {
+            background: rgba(0, 0, 0, 0.6);
+            padding: 20px 25px;
+            border-radius: 15px;
+            margin-top: 15px;
+            width: 100%;
+            max-width: 900px;
+        }
+
+        .instructions h3 {
+            color: #feca57;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .instructions-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .instructions-col h4 {
+            color: #fff;
+            margin-bottom: 8px;
+            font-size: 1.1em;
+        }
+
+        .instructions-col.player1-col h4 {
+            color: #3498db;
+        }
+
+        .instructions-col.player2-col h4 {
+            color: #e74c3c;
+        }
+
+        .instructions ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .instructions li {
+            padding: 4px 0;
+            color: #a0a0a0;
+            font-size: 0.95em;
+        }
+
+        .instructions li::before {
+            content: "🏀 ";
+            margin-right: 8px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 450px;
+            box-shadow: 0 20px 60px rgba(233, 69, 96, 0.3);
+            border: 2px solid #e94560;
+        }
+
+        .modal-content h2 {
+            color: #feca57;
+            font-size: 2em;
+            margin-bottom: 20px;
+        }
+
+        .modal-content .winner {
+            font-size: 1.5em;
+            margin: 15px 0;
+            font-weight: bold;
+        }
+
+        .modal-content .winner.player1-win {
+            color: #3498db;
+        }
+
+        .modal-content .winner.player2-win {
+            color: #e74c3c;
+        }
+
+        .modal-content .final-score {
+            font-size: 2.5em;
+            color: #fff;
+            margin: 15px 0;
+        }
+
+        .modal-content p {
+            color: #a0a0a0;
+            margin-bottom: 8px;
+        }
+
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            header h1 {
+                font-size: 1.3em;
+            }
+
+            .scoreboard {
+                flex-wrap: wrap;
+                gap: 10px;
+                padding: 10px 20px;
+            }
+
+            .instructions-grid {
+                grid-template-columns: 1fr;
+            }
+
+            #gameCanvas {
+                max-width: 100%;
+                height: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="fullscreen-btn" id="fullscreenBtn" onclick="toggleFullscreen()" title="Toggle Fullscreen">⛶</button>
+
+    <header>
+        <h1>🏀 2 Player Basketball</h1>
+        <nav>
+            <a href="index.html">🏠 Home</a>
+            <a href="dragonball-game.html">🐉 Dragon Ball</a>
+        </nav>
+    </header>
+
+    <div class="game-container">
+        <div class="scoreboard">
+            <div class="team-score player1">
+                <div>
+                    <div class="label">Player 1 (WASD)</div>
+                    <div class="score" id="score1">0</div>
+                </div>
+                <div class="possession-indicator" id="poss1">⚪</div>
+            </div>
+            <div class="game-timer">
+                <span id="timer">2:00</span>
+            </div>
+            <div class="team-score player2">
+                <div class="possession-indicator" id="poss2">⚪</div>
+                <div>
+                    <div class="label">Player 2 (Arrows)</div>
+                    <div class="score" id="score2">0</div>
+                </div>
+            </div>
+        </div>
+
+        <canvas id="gameCanvas" width="900" height="550"></canvas>
+
+        <div class="controls">
+            <button class="btn btn-primary" id="startBtn" onclick="startGame()">🎮 Start Game</button>
+            <button class="btn btn-secondary" onclick="resetGame()">🔄 Reset</button>
+        </div>
+
+        <div class="fullscreen-controls controls">
+            <button class="btn btn-primary" onclick="startGame()">🎮 Start Game</button>
+            <button class="btn btn-secondary" onclick="resetGame()">🔄 Reset</button>
+            <button class="btn btn-secondary" onclick="toggleFullscreen()">⛶ Exit Fullscreen</button>
+        </div>
+
+        <div class="instructions">
+            <h3>How to Play:</h3>
+            <div class="instructions-grid">
+                <div class="instructions-col player1-col">
+                    <h4>Player 1 (Blue) - WASD</h4>
+                    <ul>
+                        <li><strong>W/A/S/D</strong> - Move up/left/down/right</li>
+                        <li><strong>Q</strong> - Shoot (when you have the ball)</li>
+                        <li><strong>E</strong> - Steal (when near opponent with ball)</li>
+                        <li><strong>Shift</strong> - Sprint (faster movement)</li>
+                    </ul>
+                </div>
+                <div class="instructions-col player2-col">
+                    <h4>Player 2 (Red) - Arrow Keys</h4>
+                    <ul>
+                        <li><strong>↑/←/↓/→</strong> - Move up/left/down/right</li>
+                        <li><strong>K</strong> - Shoot (when you have the ball)</li>
+                        <li><strong>L</strong> - Steal (when near opponent with ball)</li>
+                        <li><strong>Ctrl</strong> - Sprint (faster movement)</li>
+                    </ul>
+                </div>
+            </div>
+            <div style="margin-top: 15px; text-align: center;">
+                <p style="color: #a0a0a0;">
+                    🏀 Hold the ball and move to dribble • Get past your opponent to score • First to score or highest score when time runs out wins!
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="gameOverModal">
+        <div class="modal-content">
+            <h2>Game Over! 🏀</h2>
+            <div class="winner" id="winnerText">Player 1 Wins!</div>
+            <div class="final-score" id="finalScore">0 - 0</div>
+            <p id="gameMessage">Great game!</p>
+            <br>
+            <button class="btn btn-primary" onclick="closeModal(); resetGame();">Play Again</button>
+            <button class="btn btn-secondary" onclick="closeModal(); window.location.href='index.html'">Home</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Court dimensions
+        const COURT = {
+            x: 30,
+            y: 30,
+            width: canvas.width - 60,
+            height: canvas.height - 60,
+            centerCircleRadius: 50,
+            hoopRadius: 15
+        };
+
+        // Hoops
+        const HOOPS = {
+            left: { x: COURT.x + 50, y: COURT.y + COURT.height / 2 },
+            right: { x: COURT.x + COURT.width - 50, y: COURT.y + COURT.height / 2 }
+        };
+
+        // Hoop detection radius (larger = easier to score)
+        const HOOP_DETECTION_RADIUS = 25;
+
+        // Game state
+        let gameRunning = false;
+        let gamePaused = false;
+        let timeLeft = 120; // 2 minutes
+        let timerInterval = null;
+        let lastTime = 0;
+
+        // Scores
+        let score1 = 0;
+        let score2 = 0;
+
+        // Keys pressed
+        const keys = {};
+
+        // Players
+        const player1 = {
+            x: COURT.x + COURT.width / 4,
+            y: COURT.y + COURT.height / 2,
+            radius: 20,
+            speed: 3,
+            sprintSpeed: 5,
+            color: '#3498db',
+            hasBall: false,
+            shooting: false,
+            shootTimer: 0,
+            stealCooldown: 0,
+            direction: 0 // angle facing
+        };
+
+        const player2 = {
+            x: COURT.x + COURT.width * 3 / 4,
+            y: COURT.y + COURT.height / 2,
+            radius: 20,
+            speed: 3,
+            sprintSpeed: 5,
+            color: '#e74c3c',
+            hasBall: false,
+            shooting: false,
+            shootTimer: 0,
+            stealCooldown: 0,
+            direction: 0
+        };
+
+        // Ball
+        const ball = {
+            x: COURT.x + COURT.width / 2,
+            y: COURT.y + COURT.height / 2,
+            radius: 10,
+            vx: 0,
+            vy: 0,
+            owner: null, // which player has it
+            dribblePhase: 0,
+            dribbleHeight: 0,
+            inAir: false,
+            airTimer: 0,
+            targetX: 0,
+            targetY: 0,
+            scored: false,
+            shooter: null // track who shot
+        };
+
+        // Particles
+        let particles = [];
+
+        // Dribble animation
+        let dribbleBounce = 0;
+
+        // Initialize game
+        function initGame() {
+            player1.x = COURT.x + COURT.width / 4;
+            player1.y = COURT.y + COURT.height / 2;
+            player1.hasBall = false;
+
+            player2.x = COURT.x + COURT.width * 3 / 4;
+            player2.y = COURT.y + COURT.height / 2;
+            player2.hasBall = false;
+
+            ball.x = COURT.x + COURT.width / 2;
+            ball.y = COURT.y + COURT.height / 2;
+            ball.vx = 0;
+            ball.vy = 0;
+            ball.owner = null;
+            ball.inAir = false;
+            ball.scored = false;
+
+            particles = [];
+        }
+
+        // Draw basketball court
+        function drawCourt() {
+            // Court background
+            ctx.fillStyle = '#d4a574';
+            ctx.fillRect(COURT.x, COURT.y, COURT.width, COURT.height);
+
+            // Court border
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(COURT.x, COURT.y, COURT.width, COURT.height);
+
+            // Center line
+            ctx.beginPath();
+            ctx.moveTo(COURT.x + COURT.width / 2, COURT.y);
+            ctx.lineTo(COURT.x + COURT.width / 2, COURT.y + COURT.height);
+            ctx.stroke();
+
+            // Center circle
+            ctx.beginPath();
+            ctx.arc(COURT.x + COURT.width / 2, COURT.y + COURT.height / 2, COURT.centerCircleRadius, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Three-point arcs
+            // Left side
+            ctx.beginPath();
+            ctx.arc(HOOPS.left.x, HOOPS.left.y, 130, -Math.PI / 2, Math.PI / 2);
+            ctx.stroke();
+
+            // Right side
+            ctx.beginPath();
+            ctx.arc(HOOPS.right.x, HOOPS.right.y, 130, Math.PI / 2, -Math.PI / 2);
+            ctx.stroke();
+
+            // Free throw circles
+            ctx.beginPath();
+            ctx.arc(HOOPS.left.x + 80, HOOPS.left.y, 40, 0, Math.PI * 2);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(HOOPS.right.x - 80, HOOPS.right.y, 40, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Paint areas
+            ctx.fillStyle = 'rgba(200, 150, 100, 0.3)';
+            ctx.fillRect(COURT.x, COURT.y + COURT.height / 2 - 60, 100, 120);
+            ctx.fillRect(COURT.x + COURT.width - 100, COURT.y + COURT.height / 2 - 60, 100, 120);
+
+            // Draw hoops
+            drawHoop(HOOPS.left, 'right');
+            drawHoop(HOOPS.right, 'left');
+
+            // Score zone labels
+            ctx.fillStyle = 'rgba(255,255,255,0.3)';
+            ctx.font = '14px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('P1 SCORE →', HOOPS.left.x + 50, COURT.y + COURT.height / 2 - 80);
+            ctx.fillText('← P2 SCORE', HOOPS.right.x - 50, COURT.y + COURT.height / 2 - 80);
+        }
+
+        function drawHoop(hoop, direction) {
+            // Backboard
+            ctx.fillStyle = '#fff';
+            if (direction === 'right') {
+                ctx.fillRect(hoop.x - 20, hoop.y - 25, 8, 50);
+            } else {
+                ctx.fillRect(hoop.x + 12, hoop.y - 25, 8, 50);
+            }
+
+            // Rim
+            ctx.strokeStyle = '#e74c3c';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(hoop.x, hoop.y, COURT.hoopRadius, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Net
+            ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+            ctx.lineWidth = 1;
+            for (let i = -10; i <= 10; i += 5) {
+                ctx.beginPath();
+                ctx.moveTo(hoop.x + i, hoop.y + COURT.hoopRadius);
+                ctx.lineTo(hoop.x + i * 0.5, hoop.y + COURT.hoopRadius + 20);
+                ctx.stroke();
+            }
+        }
+
+        // Draw player
+        function drawPlayer(player, label) {
+            ctx.save();
+            ctx.translate(player.x, player.y);
+
+            // Shadow
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+            ctx.beginPath();
+            ctx.ellipse(0, player.radius, player.radius * 0.8, player.radius * 0.3, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Player body
+            ctx.fillStyle = player.color;
+            ctx.beginPath();
+            ctx.arc(0, 0, player.radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Player border
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Direction indicator
+            ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(Math.cos(player.direction) * player.radius, Math.sin(player.direction) * player.radius);
+            ctx.stroke();
+
+            // Label
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 12px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(label, 0, 0);
+
+            // Sprint indicator
+            if (player.sprinting) {
+                ctx.strokeStyle = '#feca57';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([3, 3]);
+                ctx.beginPath();
+                ctx.arc(0, 0, player.radius + 5, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+
+            ctx.restore();
+        }
+
+        // Draw ball
+        function drawBall() {
+            let drawY = ball.y;
+            let scale = 1;
+
+            if (ball.owner) {
+                // Ball follows owner with dribble animation
+                const owner = ball.owner;
+                ball.x = owner.x + Math.cos(owner.direction) * (owner.radius + 8);
+                ball.y = owner.y + Math.sin(owner.direction) * (owner.radius + 8);
+
+                // Dribble bounce effect
+                dribbleBounce = Math.abs(Math.sin(Date.now() / 100)) * 5;
+                drawY = ball.y + dribbleBounce;
+                scale = 1 + dribbleBounce * 0.02;
+            } else if (ball.inAir) {
+                // Ball in air (shooting)
+                scale = 1 + ball.airTimer * 0.1;
+            }
+
+            ctx.save();
+            ctx.translate(ball.x, drawY);
+            ctx.scale(scale, scale);
+
+            // Ball shadow
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+            ctx.beginPath();
+            ctx.ellipse(0, ball.radius, ball.radius * 0.8, ball.radius * 0.3, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Ball body
+            ctx.fillStyle = '#e67e22';
+            ctx.beginPath();
+            ctx.arc(0, 0, ball.radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Ball lines
+            ctx.strokeStyle = '#d35400';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(-ball.radius, 0);
+            ctx.lineTo(ball.radius, 0);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(0, 0, ball.radius * 0.7, -Math.PI / 2, Math.PI / 2);
+            ctx.stroke();
+
+            // Rotation effect
+            const rotation = Date.now() / 200;
+            ctx.save();
+            ctx.rotate(rotation);
+            ctx.beginPath();
+            ctx.arc(0, 0, ball.radius * 0.7, 0, Math.PI);
+            ctx.stroke();
+            ctx.restore();
+
+            ctx.restore();
+        }
+
+        // Draw particles
+        function drawParticles() {
+            particles.forEach((p, index) => {
+                ctx.globalAlpha = p.life;
+                
+                if (p.isText && p.text) {
+                    // Draw text particle
+                    ctx.fillStyle = p.color;
+                    ctx.font = 'bold 24px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(p.text, p.x, p.y);
+                } else {
+                    // Draw regular particle
+                    ctx.fillStyle = p.color;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.1;
+                p.life -= 0.02;
+
+                if (p.life <= 0) {
+                    particles.splice(index, 1);
+                }
+            });
+            ctx.globalAlpha = 1;
+        }
+
+        // Create score celebration effect
+        function createScoreEffect(x, y) {
+            const colors = ['#feca57', '#e94560', '#2ed573', '#ff6b6b', '#ffa502', '#3498db'];
+            for (let i = 0; i < 30; i++) {
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 10,
+                    vy: (Math.random() - 0.5) * 10 - 3,
+                    radius: Math.random() * 5 + 2,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    life: 1
+                });
+            }
+        }
+
+        // Update player movement
+        function updatePlayer(player, up, down, left, right, sprint, shoot, steal) {
+            const speed = sprint ? player.sprintSpeed : player.speed;
+            player.sprinting = sprint;
+
+            let dx = 0, dy = 0;
+            if (up) dy -= 1;
+            if (down) dy += 1;
+            if (left) dx -= 1;
+            if (right) dx += 1;
+
+            if (dx !== 0 || dy !== 0) {
+                // Normalize diagonal movement
+                const len = Math.sqrt(dx * dx + dy * dy);
+                dx /= len;
+                dy /= len;
+
+                player.direction = Math.atan2(dy, dx);
+
+                player.x += dx * speed;
+                player.y += dy * speed;
+            }
+
+            // Keep player in bounds
+            player.x = Math.max(COURT.x + player.radius, Math.min(COURT.x + COURT.width - player.radius, player.x));
+            player.y = Math.max(COURT.y + player.radius, Math.min(COURT.y + COURT.height - player.radius, player.y));
+
+            // Handle shooting
+            if (player.hasBall && shoot && player.shootTimer <= 0) {
+                shootBall(player);
+                player.shootTimer = 30;
+            }
+
+            // Handle steal attempt
+            if (!player.hasBall && steal && player.stealCooldown <= 0) {
+                trySteal(player);
+                player.stealCooldown = 40;
+            }
+
+            // Update cooldowns
+            if (player.shootTimer > 0) player.shootTimer--;
+            if (player.stealCooldown > 0) player.stealCooldown--;
+        }
+
+        // Shoot ball
+        function shootBall(player) {
+            // Determine which hoop to shoot at
+            let targetHoop;
+            if (player === player1) {
+                targetHoop = HOOPS.right; // Player 1 scores on right hoop
+            } else {
+                targetHoop = HOOPS.left; // Player 2 scores on left hoop
+            }
+
+            const dx = targetHoop.x - player.x;
+            const dy = targetHoop.y - player.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            // No range limit - can shoot from anywhere
+            ball.owner = null;
+            player.hasBall = false;
+            ball.inAir = true;
+            ball.airTimer = 0;
+            ball.scored = false;
+            ball.shooter = player; // Track who shot
+
+            const speed = 8;
+            ball.vx = (dx / dist) * speed;
+            ball.vy = (dy / dist) * speed - 1.5; // Arc upward (less steep for better accuracy)
+
+            ball.targetX = targetHoop.x;
+            ball.targetY = targetHoop.y;
+        }
+
+        // Try to steal ball
+        function trySteal(player) {
+            const opponent = player === player1 ? player2 : player1;
+
+            if (opponent.hasBall) {
+                const dx = player.x - opponent.x;
+                const dy = player.y - opponent.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist < 65) {
+                    // Successful steal!
+                    opponent.hasBall = false;
+                    ball.owner = player;
+                    player.hasBall = true;
+
+                    // Steal effect
+                    for (let i = 0; i < 10; i++) {
+                        particles.push({
+                            x: ball.x,
+                            y: ball.y,
+                            vx: (Math.random() - 0.5) * 5,
+                            vy: (Math.random() - 0.5) * 5,
+                            radius: 3,
+                            color: '#feca57',
+                            life: 0.8
+                        });
+                    }
+                }
+            }
+        }
+
+        // Update ball physics
+        function updateBall() {
+            if (ball.inAir) {
+                ball.x += ball.vx;
+                ball.y += ball.vy;
+                ball.vy += 0.15; // Gravity
+                ball.airTimer++;
+
+                // Check if ball reached hoop area
+                const targetHoop = ball.targetX > COURT.width / 2 ? HOOPS.right : HOOPS.left;
+                const dx = ball.x - targetHoop.x;
+                const dy = ball.y - targetHoop.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist < HOOP_DETECTION_RADIUS && ball.vy >= 0 && !ball.scored) {
+                    // Scored!
+                    ball.scored = true;
+                    ball.inAir = false;
+
+                    // Calculate points based on distance from hoop when shot
+                    let points = 1; // Default
+                    if (ball.shooter) {
+                        const shooterDist = Math.sqrt(
+                            Math.pow(ball.shooter.x - targetHoop.x, 2) + 
+                            Math.pow(ball.shooter.y - targetHoop.y, 2)
+                        );
+                        // Three-point arc is at 130px radius
+                        if (shooterDist > 130) {
+                            points = 3;
+                        } else {
+                            points = 2;
+                        }
+                    }
+
+                    if (targetHoop === HOOPS.right) {
+                        score1 += points;
+                        document.getElementById('score1').textContent = score1;
+                    } else {
+                        score2 += points;
+                        document.getElementById('score2').textContent = score2;
+                    }
+
+                    // Show points earned
+                    particles.push({
+                        x: targetHoop.x,
+                        y: targetHoop.y - 30,
+                        vx: 0,
+                        vy: -1,
+                        radius: 0,
+                        color: '#feca57',
+                        life: 1,
+                        text: `+${points}`,
+                        isText: true
+                    });
+
+                    createScoreEffect(targetHoop.x, targetHoop.y);
+
+                    // Reset after scoring
+                    setTimeout(() => resetAfterScore(), 1000);
+                    return;
+                }
+
+                // Ball out of bounds or missed
+                if (ball.x < COURT.x - 30 || ball.x > COURT.x + COURT.width + 30 ||
+                    ball.y < COURT.y - 30 || ball.y > COURT.y + COURT.height + 30 ||
+                    ball.airTimer > 120) {
+                    ball.inAir = false;
+                    ball.vx = 0;
+                    ball.vy = 0;
+                    
+                    // Give ball to the player who didn't shoot last
+                    // Determine which player last had the ball based on target hoop direction
+                    const lastShooter = ball.targetX > COURT.width / 2 ? player1 : player2;
+                    const opponent = lastShooter === player1 ? player2 : player1;
+                    
+                    // Give ball to opposition
+                    ball.owner = opponent;
+                    opponent.hasBall = true;
+                    
+                    // Position ball near the opponent
+                    ball.x = opponent.x;
+                    ball.y = opponent.y;
+                }
+            } else if (!ball.owner) {
+                // Loose ball - check if player picks it up
+                [player1, player2].forEach(player => {
+                    if (!ball.owner && !ball.inAir) {
+                        const dx = ball.x - player.x;
+                        const dy = ball.y - player.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+
+                        if (dist < player.radius + ball.radius + 5) {
+                            ball.owner = player;
+                            player.hasBall = true;
+                        }
+                    }
+                });
+            }
+        }
+
+        // Reset after score
+        function resetAfterScore() {
+            ball.inAir = false;
+            ball.owner = null;
+            ball.scored = false;
+
+            // Reset positions
+            player1.x = COURT.x + COURT.width / 4;
+            player1.y = COURT.y + COURT.height / 2;
+            player1.hasBall = false;
+
+            player2.x = COURT.x + COURT.width * 3 / 4;
+            player2.y = COURT.y + COURT.height / 2;
+            player2.hasBall = false;
+
+            ball.x = COURT.x + COURT.width / 2;
+            ball.y = COURT.y + COURT.height / 2;
+            ball.vx = 0;
+            ball.vy = 0;
+        }
+
+        // Update possession indicators
+        function updatePossession() {
+            document.getElementById('poss1').textContent = player1.hasBall ? '🏀' : '⚪';
+            document.getElementById('poss2').textContent = player2.hasBall ? '🏀' : '⚪';
+        }
+
+        // Format time
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // Main game loop
+        function gameLoop(timestamp) {
+            if (!gameRunning) return;
+
+            const deltaTime = timestamp - lastTime;
+            lastTime = timestamp;
+
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw court
+            drawCourt();
+
+            // Handle input and update players
+            // Player 1 - WASD + Q (shoot) + E (steal) + Shift (sprint)
+            updatePlayer(
+                player1,
+                keys['w'] || keys['W'],
+                keys['s'] || keys['S'],
+                keys['a'] || keys['A'],
+                keys['d'] || keys['D'],
+                keys['Shift'],
+                keys['q'] || keys['Q'],
+                keys['e'] || keys['E']
+            );
+
+            // Player 2 - Arrow keys + K (shoot) + L (steal) + Ctrl (sprint)
+            updatePlayer(
+                player2,
+                keys['ArrowUp'],
+                keys['ArrowDown'],
+                keys['ArrowLeft'],
+                keys['ArrowRight'],
+                keys['Control'],
+                keys['k'] || keys['K'],
+                keys['l'] || keys['L']
+            );
+
+            // Check player collision
+            const dx = player1.x - player2.x;
+            const dy = player1.y - player2.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            const minDist = player1.radius + player2.radius;
+
+            if (dist < minDist && dist > 0) {
+                // Push players apart
+                const overlap = minDist - dist;
+                const nx = dx / dist;
+                const ny = dy / dist;
+
+                player1.x += nx * overlap / 2;
+                player1.y += ny * overlap / 2;
+                player2.x -= nx * overlap / 2;
+                player2.y -= ny * overlap / 2;
+            }
+
+            // Update ball
+            updateBall();
+
+            // Update possession display
+            updatePossession();
+
+            // Draw players
+            drawPlayer(player1, 'P1');
+            drawPlayer(player2, 'P2');
+
+            // Draw ball
+            drawBall();
+
+            // Draw particles
+            drawParticles();
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Start game
+        function startGame() {
+            if (gameRunning) return;
+
+            score1 = 0;
+            score2 = 0;
+            timeLeft = 120;
+            gameRunning = true;
+
+            document.getElementById('score1').textContent = '0';
+            document.getElementById('score2').textContent = '0';
+            document.getElementById('timer').textContent = formatTime(timeLeft);
+            document.getElementById('startBtn').textContent = '🎮 Playing...';
+            document.getElementById('startBtn').disabled = true;
+
+            initGame();
+
+            timerInterval = setInterval(() => {
+                if (!gamePaused) {
+                    timeLeft--;
+                    document.getElementById('timer').textContent = formatTime(timeLeft);
+
+                    if (timeLeft <= 0) {
+                        endGame();
+                    }
+                }
+            }, 1000);
+
+            lastTime = performance.now();
+            gameLoop(lastTime);
+        }
+
+        // End game
+        function endGame() {
+            gameRunning = false;
+            clearInterval(timerInterval);
+
+            let winnerText, winnerClass, message;
+            if (score1 > score2) {
+                winnerText = 'Player 1 Wins! 🎉';
+                winnerClass = 'player1-win';
+                message = 'Blue team dominates the court!';
+            } else if (score2 > score1) {
+                winnerText = 'Player 2 Wins! 🎉';
+                winnerClass = 'player2-win';
+                message = 'Red team takes the victory!';
+            } else {
+                winnerText = "It's a Draw! 🤝";
+                winnerClass = '';
+                message = 'Both players fought hard!';
+            }
+
+            const winnerEl = document.getElementById('winnerText');
+            winnerEl.textContent = winnerText;
+            winnerEl.className = 'winner ' + winnerClass;
+
+            document.getElementById('finalScore').textContent = `${score1} - ${score2}`;
+            document.getElementById('gameMessage').textContent = message;
+            document.getElementById('gameOverModal').classList.add('active');
+
+            document.getElementById('startBtn').textContent = '🎯 Start Game';
+            document.getElementById('startBtn').disabled = false;
+        }
+
+        // Reset game
+        function resetGame() {
+            gameRunning = false;
+            gamePaused = false;
+            clearInterval(timerInterval);
+
+            score1 = 0;
+            score2 = 0;
+            timeLeft = 120;
+
+            document.getElementById('score1').textContent = '0';
+            document.getElementById('score2').textContent = '0';
+            document.getElementById('timer').textContent = formatTime(timeLeft);
+            document.getElementById('startBtn').textContent = '🎮 Start Game';
+            document.getElementById('startBtn').disabled = false;
+
+            initGame();
+
+            // Clear and draw initial state
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawCourt();
+            drawPlayer(player1, 'P1');
+            drawPlayer(player2, 'P2');
+            drawBall();
+            updatePossession();
+        }
+
+        // Close modal
+        function closeModal() {
+            document.getElementById('gameOverModal').classList.remove('active');
+        }
+
+        // Keyboard events
+        document.addEventListener('keydown', (e) => {
+            keys[e.key] = true;
+
+            // Prevent scrolling with arrow keys and space
+            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
+                e.preventDefault();
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            keys[e.key] = false;
+        });
+
+        // Fullscreen toggle
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log(`Error attempting fullscreen: ${err.message}`);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        // Listen for fullscreen changes
+        document.addEventListener('fullscreenchange', () => {
+            if (document.fullscreenElement) {
+                document.body.classList.add('fullscreen-mode');
+                document.getElementById('fullscreenBtn').style.display = 'none';
+            } else {
+                document.body.classList.remove('fullscreen-mode');
+                document.getElementById('fullscreenBtn').style.display = 'block';
+            }
+        });
+
+        // Initialize
+        initGame();
+        drawCourt();
+        drawPlayer(player1, 'P1');
+        drawPlayer(player2, 'P2');
+        drawBall();
+    </script>
+</body>
+</html>
